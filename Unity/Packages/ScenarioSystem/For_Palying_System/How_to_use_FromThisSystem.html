@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Complete Guide: ScenarioModelGenerator & GenericEventListener</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 20px;
+    }
+    h1, h2, h3 {
+      color: #ffab00;
+      margin: 0 0 10px;
+    }
+    h1 { font-size: 2.5em; }
+    h2 { font-size: 2em; margin-top: 30px; }
+    h3 { font-size: 1.5em; margin-top: 20px; }
+    p { line-height: 1.6; margin: 10px 0; }
+    ul, ol { margin: 10px 0 10px 20px; }
+    code {
+      display: block;
+      background-color: #333;
+      padding: 8px;
+      border-radius: 4px;
+      color: #ffab00;
+      white-space: pre-wrap;
+      margin: 8px 0;
+    }
+    .step {
+      margin-bottom: 40px;
+    }
+    .note {
+      background-color: #1e1e1e;
+      padding: 10px;
+      border-left: 4px solid #ffab00;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    footer {
+      margin-top: 50px;
+      text-align: center;
+      font-size: 0.9em;
+      color: #bbb;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🛠️ Complete Guide: ScenarioModelGenerator & GenericEventListener</h1>
+  <p>Learn how these helpers plug into the core <strong>Scenario System</strong> to build dynamic missions—step by step with examples!</p>
+
+  <div class="step">
+    <h2>1️⃣ Understand the Components & Their Relationship</h2>
+    <p><strong>ScenarioModelDefinition</strong> defines one template (ID, DSL, parameters).<br>
+    <strong>ScenarioModelLibrary</strong> holds all model definitions.<br>
+    <strong>ScenarioGenerator</strong> picks models, fills parameters, generates DSL, and sends it to <em>ScenarioRunner</em> (the core executor).<br>
+    <strong>GenericEventListener</strong> listens to any public C# event and triggers scenario generation.</p>
+
+    <div class="note">
+      Example Diagram (pseudo):
+      <pre>
+ScenarioModelLibrary (40 models)
+         ↓
+ ScenarioGenerator → generates DSL text
+         ↓
+   ScenarioRunner (core) → Execute DSL
+         ↑
+GenericEventListener → Trigger Generator on events
+      </pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <h2>2️⃣ Step 1: Add the Script Files</h2>
+    <p><strong>Do:</strong> Copy into <code>Assets/Scripts/</code>. Unity will auto‐compile.</p>
+    <p><strong>Don’t:</strong> Place them in an <code>Editor/</code> folder (they are runtime).</p>
+
+    <h3>Example: File Tree</h3>
+    <code>
+Assets/
+└─ Scripts/
+   ├─ ScenarioModelDefinition.cs
+   ├─ ScenarioModelLibrary.cs
+   ├─ ScenarioGenerator.cs
+   └─ GenericEventListener.cs
+    </code>
+  </div>
+
+  <div class="step">
+    <h2>3️⃣ Step 2: Prepare Default Parameter Values</h2>
+    <p>The generator reads values from <code>PlayerPrefs</code> by key: <code>{ModelId}_{ParamKey}</code>.</p>
+    <p><strong>Do:</strong> Initialize defaults before running scenarios.</p>
+    <p><strong>Don’t:</strong> Forget to set every required parameter—missing keys default to the literal name.</p>
+
+    <h3>Example: ScenarioDefaults.cs</h3>
+    <code>    
+using UnityEngine;
+using System.Collections.Generic;
+
+[System.Serializable]
+public class ScenarioParameter
+{
+    public string key;     // e.g. "interval", "enemyTag"
+    public string value;   // e.g. "5", "Goblin"
+}
+
+[System.Serializable]
+public class ScenarioModelConfig
+{
+    public string modelId;                      // e.g. "SpawnWave"
+    public List<ScenarioParameter> parameters;  // List of key-value pairs
+}
+
+public class ScenarioDefaults : MonoBehaviour
+{
+    [Header("Scenario Model Configurations")]
+    public List<ScenarioModelConfig> modelConfigs = new List<ScenarioModelConfig>();
+
+    void Awake()
+    {
+        foreach (var model in modelConfigs)
+        {
+            foreach (var param in model.parameters)
+            {
+                string fullKey = $"{model.modelId}_{param.key}";
+                PlayerPrefs.SetString(fullKey, param.value);
+                Debug.Log($"Set PlayerPref: {fullKey} = {param.value}");
+            }
+        }
+    }
+}
+    </code>
+    <p>Example of Using: </p>
+    <code>
+modelConfigs:
+  - modelId: "SpawnWave"
+    parameters:
+      - key: "interval", value: "5"
+      - key: "scoreThreshold", value: "100"
+      - key: "enemyTag", value: "Enemy"
+      - key: "count", value: "3"
+
+  - modelId: "TimedSpawn"
+    parameters:
+      - key: "delay", value: "2"
+      - key: "enemyTag", value: "Goblin"
+      - key: "count", value: "4"
+
+  - modelId: "BossPhase"
+    parameters:
+      - key: "bossId", value: "Boss1"
+      - key: "threshold", value: "50"
+      - key: "newPattern", value: "Aggressive"
+    </code>
+  </div>
+
+  <div class="step">
+    <h2>4️⃣ Step 3: Configure ScenarioGenerator</h2>
+    <p>Select which models to run or let it pick random ones.</p>
+    <p><strong>Do:</strong> Fill the lists in the Inspector.<br>
+    <strong>Don’t:</strong> Leave <code>selectedModelIds</code> empty if <code>useRandom</code> is OFF.</p>
+
+    <h3>Example: Inspector Settings</h3>
+    <code>
+ScenarioGenerator
+• selectedModelIds: [ "SpawnWave", "TimedSpawn" ]
+• useRandom: ✔︎
+• randomCount: 2
+• constraintTags: [ "enemy", "wave" ]
+    </code>
+  </div>
+
+  <div class="step">
+    <h2>5️⃣ Step 4: Generate & Run the Scenario</h2>
+    <p><strong>Do:</strong> Trigger <code>GenerateAndRun()</code> after defaults load.<br>
+    <strong>Don’t:</strong> Call it before <code>ScenarioDefaults</code> Awake.</p>
+
+    <h3>Example A: Auto on Start</h3>
+    <code>
+using UnityEngine;
+
+public class ScenarioStarter : MonoBehaviour
+{
+  void Start()
+  {
+    GetComponent&lt;ScenarioGenerator&gt;().GenerateAndRun();
+  }
+}
+    </code>
+
+    <h3>Example B: Context Menu</h3>
+    <code>
+// In ScenarioGenerator.cs
+[ContextMenu("Generate & Run")]
+public void RunHere() => GenerateAndRun();
+    </code>
+  </div>
+
+  <div class="step">
+    <h2>6️⃣ Step 5: Hook Up GenericEventListener</h2>
+    <p>Listen to any public event (like health‐zero) and re‐run scenarios.</p>
+    <p><strong>Do:</strong> Use <code>UnityEvent</code> callback to call <code>GenerateAndRun()</code>.<br>
+    <strong>Don’t:</strong> Try to listen private events—they won’t be found by reflection.</p>
+
+    <h3>Example: Listen to PlayerHealth.OnZero</h3>
+    <code>
+public class PlayerHealth : MonoBehaviour
+{
+  public event System.EventHandler OnZero;
+  void Update() {
+    if (health &lt;= 0) OnZero?.Invoke(this, System.EventArgs.Empty);
+  }
+}
+
+// In Inspector for GenericEventListener:
+• Target Component: PlayerHealth (on your Player GameObject)
+• Event Name: OnZero
+• On Event Triggered → + → ScenarioController → ScenarioGenerator.GenerateAndRun()
+    </code>
+  </div>
+
+  <div class="step">
+    <h2>7️⃣ Step 6: Observe the Generated DSL</h2>
+    <p>Open Unity Console to see the final DSL text. It’s fed into <code>ScenarioRunner</code> (core system) for execution.</p>
+
+    <h3>Example Output</h3>
+    <code>
+// Model: SpawnWave — Spawn a wave of enemies every N seconds until score >= M
+loop every=5 seconds until score >= 100:
+  action Spawn tag=Enemy count=3;
+end
+
+// Model: TimedSpawn — Spawn X enemies after Y seconds delay
+action Wait seconds=2;
+action Spawn tag=Goblin count=4;
+    </code>
+  </div>
+
+  <div class="step">
+    <h2>8️⃣ Do’s & Don’ts Summary</h2>
+    <ul>
+      <li>✅ Do set all PlayerPrefs before generating.</li>
+      <li>❌ Don’t call GenerateAndRun too early.</li>
+      <li>✅ Do pick valid model IDs or enable random.</li>
+      <li>❌ Don’t leave GenericEventListener unconfigured—target & event must match exactly.</li>
+      <li>✅ Do verify the Console DSL before running complex scenarios.</li>
+    </ul>
+  </div>
+  
+  <div class="step">
+    <h2>9️⃣ Where & How to Use This System</h2>
+    <p>This helper suite sits between your data (models) and the core <strong>ScenarioRunner</strong>. Use it to:</p>
+    <ul>
+      <li><strong>Designer Prototyping:</strong> Rapidly test mission ideas without coding.</li>
+      <li><strong>Live Events:</strong> Trigger mini-quests when a boss dies or a door opens.</li>
+      <li><strong>Random Rotations:</strong> Generate daily challenges for players using <code>useRandom</code>.</li>
+      <li><strong>QA & Debug:</strong> Tweak parameters in Inspector and see instant console feedback.</li>
+    </ul>
+  
+    <h3>Example Use Cases</h3>
+    <div class="example">
+      <strong>Daily Challenge Generator</strong><br>
+      Automatically pick 3 random models each player login:
+      <code>
+  ScenarioGenerator.useRandom = true;
+  ScenarioGenerator.randomCount = 3;
+  ScenarioGenerator.GenerateAndRun();
+      </code>
+    </div>
+  
+    <div class="example">
+      <strong>Event-Driven Mini-Quest</strong><br>
+      When the player’s shield breaks, spawn health packs:
+      <code>
+  GenericEventListener →
+  Target Component: PlayerShield
+  Event Name: OnShieldBreak
+  Callback → ScenarioGenerator.GenerateAndRun()
+  
+  ScenarioDefaults.modelConfigs: 
+  - modelId: "SupplyDrop"
+    parameters:
+      - key: "delay", value: "0"
+      - key: "supplyPrefab", value: "HealthPack"
+      - key: "dropPoint", value: "PlayerPosition"
+      - key: "missionId", value: "Resupply"
+      </code>
+    </div>
+  
+    <div class="example">
+      <strong>Adaptive Difficulty Loop</strong><br>
+      Adjust spawn rate based on current score:
+      <code>
+  // In ScenarioModelLibrary:
+  // ModelId: "DynamicDifficulty" with template that uses {scale}
+  // In ScenarioDefaults:
+  //   modelId: "DynamicDifficulty"
+  //   parameter key "baseRate" -> "5"
+  //   parameter key "scale"    -> "20"
+  // Inspector:
+  //   selectedModelIds: ["DynamicDifficulty"]
+      </code>
+    </div>
+  </div>
+  
+
+  <footer>
+    <p>🎉 You now have a clear, step‐by‐step path—linking your 40+ models to the core Scenario System. Build epic missions at the click of a button!</p>
+  </footer>
+
+</body>
+</html>
