@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scenario System Quick Reference</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #ffab00; /* Golden color for headings */
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 2em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        h3 {
+            font-size: 1.5em;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+        p {
+            line-height: 1.6;
+        }
+        code {
+            background-color: #333;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: #ffab00;
+        }
+        .example {
+            background-color: #1e1e1e;
+            border-left: 5px solid #ffab00;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .step {
+            margin-bottom: 30px;
+        }
+        .note {
+            background-color: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #bbb;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Scenario System Quick Reference</h1>
+    <p>Follow these steps and examples to grasp the core workflow.</p>
+
+    <div class="step">
+        <h2>1. Installation</h2>
+        <p>- Copy <code>com.yourcompany.scenariosystem</code> into your project’s <code>Packages/</code> folder.</p>
+        <p>- In Unity, open <code>Window → Package Manager</code>, click <code>+</code> → <code>Add package from disk…</code>, and select <code>package.json</code>.</p>
+        <p>- Access Scenario Graph Editor under <code>Window → Scenario Graph Editor</code>.</p>
+    </div>
+
+    <div class="step">
+        <h2>2. Setup</h2>
+        <p>- Create a Graph Definition asset (e.g., MyScenario).</p>
+        <p>- Open Scenario Graph Editor, drag in MyScenario.</p>
+        <p>- Add and connect nodes (Start, Action, Condition, Loop, Parallel, Branch, EventListener, Random).</p>
+        <p>- Save the graph.</p>
+        <p>- In your Scene, create an empty GameObject, add ScenarioRunner and Blackboard, then assign your graph and blackboard.</p>
+    </div>
+
+    <div class="step">
+        <h2>3. Runtime</h2>
+        <p>- Press Play: ScenarioRunner executes the graph in order.</p>
+        <p>- Blackboard holds variables and listens for events.</p>
+    </div>
+
+    <div class="step">
+        <h2>4. Examples</h2>
+
+        <div class="example">
+            <h3>1. Simple Action</h3>
+            <p>DSL:</p>
+            <code>action Destroy tag=Tree count=3;</code>
+            <p>Flow: Start → Destroy(Tree×3)</p>
+            <p>Runtime: Immediately destroys three Tree-tagged objects.</p>
+        </div>
+
+        <div class="example">
+            <h3>2. Condition → Action</h3>
+            <p>DSL:</p>
+            <code>when score >= 10 -> action Collect var=score target=10;</code>
+            <p>Flow: Start → [Condition(score ≥ 10)] → Collect(score→10)</p>
+            <p>Runtime: Waits until score ≥ 10, then collects 10 points.</p>
+        </div>
+
+        <div class="example">
+            <h3>3. Loop</h3>
+            <p>DSL:</p>
+            <code>loop(5) { action Destroy tag=Rock count=1; }</code>
+            <p>Flow: Start → Loop×5 → Destroy(Rock×1)</p>
+            <p>Runtime: Runs Destroy five times.</p>
+        </div>
+
+        <div class="example">
+            <h3>4. Parallel</h3>
+            <p>DSL:</p>
+            <code>parallel { action Destroy tag=Enemy count=1; action Collect var=score target=5; }</code>
+            <p>Flow: Start → Parallel[Destroy, Collect]</p>
+            <p>Runtime: Destroys one Enemy and collects 5 points simultaneously.</p>
+        </div>
+
+        <div class="example">
+            <h3>5. Custom Action</h3>
+            <p>C#:</p>
+            <code>
+                [ActionName("LogMessage")]<br>
+                public class LogMessageAction : IScenarioAction {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public string message = "Hello!";<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public IEnumerator Run(Blackboard bb) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Log(message);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yield return null;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }
+            </code>
+            <p>DSL:</p>
+            <code>action LogMessage message="Mission Started!";</code>
+            <p>Runtime: Logs “Mission Started!” during playback.</p>
+        </div>
+
+        <div class="example">
+            <h3>6. Save & Load</h3>
+            <p>C#:</p>
+            <code>
+                if (Input.GetKeyDown(KeyCode.F5)) runner.SaveScenario("Save1");<br>
+                if (Input.GetKeyDown(KeyCode.F9)) runner.LoadScenario("Save1");
+            </code>
+            <p>Runtime: Press F5 to save progress; F9 to restore node state and variables.</p>
+        </div>
+
+        <div class="example">
+            <h3>7. Branching (If/Else)</h3>
+            <p>DSL:</p>
+            <code>condition playerHealth <= 0 -> action GameOver; else -> action Revive var=playerHealth value=100;</code>
+            <p>Flow: Start → Branch[GameOver | Revive(health=100)]</p>
+            <p>Runtime: Runs GameOver if health ≤ 0, otherwise Revive.</p>
+        </div>
+
+        <div class="example">
+            <h3>8. Event Listener</h3>
+            <p>DSL:</p>
+            <code>onEvent DoorOpened -> action Spawn tag=Enemy count=5;</code>
+            <p>Flow: Start → EventListener(DoorOpened) → Spawn(Enemy×5)</p>
+            <p>Runtime: Waits for RaiseEvent("DoorOpened"), then spawns five enemies.</p>
+        </div>
+
+        <div class="example">
+            <h3>9. Weighted Random</h3>
+            <p>DSL:</p>
+            <code>random { weight=70: action GiveLoot rarity=common; weight=30: action GiveLoot rarity=rare; }</code>
+            <p>Flow: Start → Random[Common 70% | Rare 30%]</p>
+            <p>Runtime: Executes one GiveLoot based on weights.</p>
+        </div>
+
+        <div class="example">
+            <h3>10. Nested Loop + Parallel Waves</h3>
+            <p>DSL:</p>
+            <code>loop(3) { parallel { action Spawn tag=Enemy type=grunt count=10; action Spawn tag=Enemy type=sniper count=2; } action Wait seconds=5; }</code>
+            <p>Flow: Start → Loop×3 → [Parallel(Spawn ×2)] → Wait(5s)</p>
+            <p>Runtime: Three waves of grunt/sniper spawns, 5 s between waves.</p>
+        </div>
+
+        <div class="example">
+            <h3>11. UI Prompt & Input</h3>
+            <p>DSL:</p>
+            <code>action ShowDialog text="Choose your path"; when userChoice != "" -> action BranchGame var=userChoice;</code>
+            <p>Flow: Start → ShowDialog → [Condition(userChoice)] → BranchGame</p>
+            <p>Runtime: Displays dialog, halts until userChoice is set in the blackboard, then runs BranchGame.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>You now have a compact, end-to-end view of installation, setup, execution, and eleven core scenarios. Build and combine these patterns to create richer, dynamic flows.</p>
+    </footer>
+
+</body>
+</html>
