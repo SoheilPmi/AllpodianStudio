@@ -113,11 +113,20 @@ FullSceneAutoSaver/
 
 ## ⚠️ Limitations
 
-- Only transform and prefab identity are saved (no custom component data yet)
+~~- Only transform and prefab identity are saved (no custom component data yet)~~
 - Events, coroutines, and non-serializable fields are not restored
 - Prefabs must be marked as Addressable and assigned properly
 
 ---
+
+
+
+
+
+
+
+
+
 
 ## 📄 License
 
