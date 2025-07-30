@@ -1,0 +1,24 @@
+{
+  "name": "scenariosystem",
+  "version": "1.0.0",
+  "displayName": "Scenario System",
+  "description": "A complete scenario system with a graphical DSL and progress storage.",
+  "unity": "2020.1",
+  "keywords": [
+    "scenario",
+    "dsl",
+    "graph",
+    "uipackage"
+  ],
+  "author": {
+    "name": "Allpodian Studio",
+    "email": "allpodianStudio@gmail.com",
+    "url": "https://github.com/SoheilPmi/AllpodianStudio/Unity"
+  },
+  "dependencies": {
+    "com.unity.ui": "1.0.0",
+    "com.unity.ui.builder": "1.0.0",
+    "com.unity.textmeshpro": "3.0.6"
+  },
+  "type": "tool"
+}
