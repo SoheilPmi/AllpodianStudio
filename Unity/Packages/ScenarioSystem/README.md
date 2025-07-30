@@ -1,5 +1,3 @@
-`
-
 🎮 Scenario System for Unity
 
 A powerful and flexible graph-based scenario system for Unity, designed to help developers and designers create dynamic missions, quests, and gameplay flows with ease.  
@@ -66,7 +64,7 @@ Manual Installation
 
 Create a new class implementing IScenarioAction:
 
-`csharp
+```csharp
 [ActionName("MyAction")]
 public class MyAction : IScenarioAction
 {
@@ -78,7 +76,7 @@ public class MyAction : IScenarioAction
         yield return null;
     }
 }
-`
+```
 
 🧠 Add New Node Types
 
@@ -90,7 +88,7 @@ public class MyAction : IScenarioAction
 
 📚 DSL Example (Text-Based)
 
-`plaintext
+```plaintext
 when score >= 50 -> action Destroy tag=Tree count=2;
 
 loop(3) {
@@ -101,7 +99,7 @@ parallel {
     action Destroy tag=Enemy count=1;
     action CollectPoints var=score target=20;
 }
-`
+```
 
 ---
 
@@ -131,7 +129,7 @@ x
 
 📂 Project Structure
 
-`
+```
 com.AllpodianStudio.scenariosystem/
 ├── Editor/
 │   └── ScenarioGraphEditor.cs
@@ -143,7 +141,7 @@ com.AllpodianStudio.scenariosystem/
 │   └── NodeTypes/
 ├── Samples/
 │   └── ExampleGraphs/
-`
+```
 
 ---
 
@@ -171,4 +169,9 @@ For questions or support, reach out via GitHub Issues
 
 Unleash your creativity and build dynamic, designer-friendly gameplay with the Scenario System.  
 Happy developing! 🚀
-`
+
+
+
+
+
+
